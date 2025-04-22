@@ -1,4 +1,4 @@
-name: Generate CDN Index
+name: Generate Recursive CDN Indexes
 
 on:
   push:
@@ -6,27 +6,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate-index:
+  generate-indexes:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Generate index.html for cdn/
+      - name: Generate index.html in every folder under /cdn
         run: |
-          cd cdn || mkdir cdn && cd cdn
-          echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>CDN Index</title></head><body><h2>CDN File Listing</h2><ul>" > index.html
-          for item in *; do
-            if [ "$item" != "index.html" ]; then
-              echo "<li><a href='$item'>$item</a></li>" >> index.html
-            fi
-          done
-          echo "</ul></body></html>" >> index.html
+          ROOT_DIR="cdn"
 
-      - name: Commit and push index.html
+          generate_index() {
+            local dir="$1"
+            echo "Generating index for $dir"
+
+            {
+              echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Index of $dir</title></head><body>"
+              echo "<h2>Index of /${dir#cdn/}</h2><ul>"
+
+              for entry in "$dir"/*; do
+                name=$(basename "$entry")
+                if [ "$name" = "index.html" ]; then continue; fi
+                if [ -d "$entry" ]; then
+                  echo "<li>📁 <a href=\"$name/index.html\">$name/</a></li>"
+                elif [ -f "$entry" ]; then
+                  echo "<li>📄 <a href=\"$name\">$name</a></li>"
+                fi
+              done
+
+              echo "</ul></body></html>"
+            } > "$dir/index.html"
+          }
+
+          export -f generate_index
+
+          find "$ROOT_DIR" -type d -print0 | while IFS= read -r -d '' dir; do
+            generate_index "$dir"
+          done
+
+      - name: Commit and Push Indexes
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add cdn/index.html
-          git commit -m "Update cdn/index.html" || echo "No changes to commit"
+          git add cdn/**/*.html
+          git commit -m "Update recursive cdn index.html files" || echo "No changes to commit"
           git push
