@@ -1,0 +1,32 @@
+name: Generate CDN Index
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  generate-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Generate index.html for cdn/
+        run: |
+          cd cdn || mkdir cdn && cd cdn
+          echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>CDN Index</title></head><body><h2>CDN File Listing</h2><ul>" > index.html
+          for item in *; do
+            if [ "$item" != "index.html" ]; then
+              echo "<li><a href='$item'>$item</a></li>" >> index.html
+            fi
+          done
+          echo "</ul></body></html>" >> index.html
+
+      - name: Commit and push index.html
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add cdn/index.html
+          git commit -m "Update cdn/index.html" || echo "No changes to commit"
+          git push
