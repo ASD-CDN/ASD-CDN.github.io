@@ -79,5 +79,5 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add cdn
-          git commit -m "Update recursive cdn index.html files with dark mode, breadcrumb, size, date" || echo "No changes to commit"
+          git commit -m "Update index.html files" || echo "No changes to commit"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
