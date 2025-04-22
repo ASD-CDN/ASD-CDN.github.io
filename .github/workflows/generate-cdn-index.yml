@@ -21,16 +21,43 @@ jobs:
             echo "Generating index for $dir"
 
             {
-              echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Index of $dir</title></head><body>"
+              echo "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Index of $dir</title>"
+              echo "<style>"
+              echo "body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; padding: 20px; }"
+              echo "a { color: #aad4ff; text-decoration: none; }"
+              echo "a:hover { color: #58a6ff; }"
+              echo "h2 { color: #61dafb; }"
+              echo "ul { list-style-type: none; padding-left: 0; }"
+              echo "li { margin: 5px 0; }"
+              echo "li a { color: #aad4ff; }"
+              echo "li a:hover { color: #58a6ff; }"
+              echo ".breadcrumb { font-size: 14px; margin-bottom: 20px; }"
+              echo ".breadcrumb a { color: #61dafb; text-decoration: none; }"
+              echo ".breadcrumb a:hover { color: #aad4ff; }"
+              echo "</style>"
+              echo "</head><body>"
+
+              # Breadcrumb Navigation
+              breadcrumb=""
+              IFS="/" read -ra dirs <<< "${dir#cdn/}"
+              for i in "${!dirs[@]}"; do
+                breadcrumb+="<a href=\"${dirs[@]:0:$i+1}\">/${dirs[$i]}</a> > "
+              done
+              echo "<div class='breadcrumb'>${breadcrumb% > }</div>"
+
               echo "<h2>Index of /${dir#cdn/}</h2><ul>"
 
-              for entry in "$dir"/*; do
-                name=$(basename "$entry")
+              # Sort and process the files
+              for entry in $(ls -1v "$dir"); do
+                name="$entry"
+                full_path="$dir/$name"
                 if [ "$name" = "index.html" ]; then continue; fi
-                if [ -d "$entry" ]; then
+                if [ -d "$full_path" ]; then
                   echo "<li>📁 <a href=\"$name/index.html\">$name/</a></li>"
-                elif [ -f "$entry" ]; then
-                  echo "<li>📄 <a href=\"$name\">$name</a></li>"
+                elif [ -f "$full_path" ]; then
+                  size=$(stat --format="%s" "$full_path")
+                  mod_date=$(date -r "$full_path" "+%Y-%m-%d %H:%M:%S")
+                  echo "<li>📄 <a href=\"$name\">$name</a> - $size bytes - $mod_date</li>"
                 fi
               done
 
@@ -40,21 +67,17 @@ jobs:
 
           export -f generate_index
 
+          mkdir -p "$ROOT_DIR"
           find "$ROOT_DIR" -type d -print0 | while IFS= read -r -d '' dir; do
             generate_index "$dir"
           done
+
       - name: Commit and Push Indexes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add cdn
-          git commit -m "Update recursive cdn index.html files" || echo "No changes to commit"
-          git push
-
-      - name: Commit and Push Indexes
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add cdn/**/*.html
-          git commit -m "Update recursive cdn index.html files" || echo "No changes to commit"
-          git push
+          git commit -m "Update recursive cdn index.html files with dark mode, breadcrumb, size, date" || echo "No changes to commit"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
