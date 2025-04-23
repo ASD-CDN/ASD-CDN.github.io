@@ -1,0 +1,40 @@
+<!-- Read LISCENSE if you haven't already -->
+
+<html>
+    <body>
+        <form>
+            <!-- Input file and access token -->
+            <label for="token">Enter your access token:</label>
+            <br>
+            <input name="token" id="token" type="text" placeholder="Enter your access token">
+            <br>
+            <!-- Label -->
+            <br>
+            <input type="file">
+            <br>
+            <!-- Label -->
+            <br>
+            <input type="submit">
+        </form>
+        <script>
+            function base64Decode(base64Encoded) {
+                // Do something with base64Encoded...
+            };
+
+            // The token has two parts:
+            // The actual GitHub token
+            // And the teacher token
+            // They are combined, this function splits and decodes them
+            // I would just use the token without input, but
+            // GitHub Pages uses static HTML and isn't secure.
+            function splitToken(token) {
+                githubToken = null // placeholder
+                teacherToken = null // placeholder
+                base64Decode(teacherToken)
+            };
+
+            // get token and run splitToken
+            // and upload files
+        </script>
+    </body>
+</html>
