@@ -1,2 +1,2 @@
-# asd-cdn.github.io
-site for hosting files within the Anchorage School District
+# asd-utils.github.io
+site for hosting files/utilities within the Anchorage School District
